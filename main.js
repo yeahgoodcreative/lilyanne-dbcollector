@@ -2,19 +2,32 @@
 // Modules
 var byDesign = require('./modules/bydesign')
 var mongoose = require('mongoose')
+var fs = require('fs')
 
 
 // Modeles
 var Order = require('./models/order')
 
-
 // Mongoose Connection
 var mongoose = require('mongoose')
-mongoose.connect('mongodb://157.230.40.86:27017/lilyanneintegration', {useNewUrlParser: true, authSource: 'admin', user: 'yeahgood', pass: 'beginnings01'})
+mongoose.connect('mongodb://localhost:27017/lilyanneintegration', {useNewUrlParser: true, authSource: 'admin', user: 'yeahgood', pass: 'beginnings01'})
 
+// Get database from connection
 var db = mongoose.connection
+
+// Check for connection erros
 db.on('error', console.error.bind(console, 'Connection error:'))
+
+// Connection established
 db.once('open', function() {
+
+    // Create a timer
+    setInterval(cloneByDesignDB, 60000)
+})
+
+function cloneByDesignDB() {
+    // Debug
+    console.log('[INFO] Cloning ByDesign DB')
 
     // Order promises array
     var orderPromises = []
@@ -190,14 +203,13 @@ db.once('open', function() {
             for (result of results) {
                 // Save order object in database
                 Order.findOneAndUpdate({orderId: result.orderId}, result, {upsert: true}, function(err, order) {
+                    // Log Error
                     if (err) {
-                        console.log(err)
+                        console.log('[ERROR] ' + err)
                     }
-
-                    console.log('Upserted an order.')
                 })
             }
             
         })
     })
-})
+}
