@@ -199,6 +199,34 @@ function cloneByDesignDB() {
 
         // Collect order promises
         Promise.all(orderPromises).then(function(results) {
+
+            // Inject integration object & values
+            if (result.integration == null) {
+                if (result.status == 'Entered') {
+                    result.integration.status = 'Processing'
+                }
+                else if (result.status == 'Posted') {
+                    result.integration.status = 'Ready to Pack'
+                }
+                else if (result.status == 'Shipped') {
+                    result.integration.status = 'Shipped'
+                }
+                else if (result.status == 'Void') {
+                    result.integration.status = 'Void'
+                }
+            }
+            else {
+                if (result.status == 'Entered') {
+                    result.integration.status = 'Processing'
+                }
+                else if (result.status == 'Posted') {
+                    result.integration.status = 'Ready to Pack'
+                }
+                else if (result.status == 'Void') {
+                    result.integration.status = 'Void'
+                }
+            }
+
             // Iterate through results
             for (result of results) {
                 // Save order object in database
