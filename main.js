@@ -10,7 +10,7 @@ var Order = require('./models/order')
 
 // Mongoose Connection
 var mongoose = require('mongoose')
-mongoose.connect('mongodb://localhost:27017/lilyanneintegration', {useNewUrlParser: true, authSource: 'admin', user: 'yeahgood', pass: 'beginnings01'})
+mongoose.connect('mongodb://157.230.40.86:27017/lilyanneintegration', {useNewUrlParser: true, authSource: 'admin', user: 'yeahgood', pass: 'beginnings01'})
 
 // Get database from connection
 var db = mongoose.connection
@@ -20,6 +20,9 @@ db.on('error', console.error.bind(console, 'Connection error:'))
 
 // Connection established
 db.once('open', function() {
+
+    // Instance first run
+    cloneByDesignDB()
 
     // Create a timer
     setInterval(cloneByDesignDB, 60000)
@@ -36,7 +39,7 @@ function cloneByDesignDB() {
     var orderListRecentPromise = new Promise(function(resolve, reject) {
 
         // Get order list recent
-        byDesign.getOrderListRecent('', 'week', 1, 'false', function(orderListRecent) {
+        byDesign.getOrderListRecent('', 'day', 1, 'false', function(orderListRecent) {
 
             // Focus in on orderListRecent
             orderListRecent = orderListRecent['soap:Envelope']['soap:Body'][0]['GetOrderListRecentResponse'][0]['GetOrderListRecentResult'][0]['OrderList']
@@ -200,35 +203,39 @@ function cloneByDesignDB() {
         // Collect order promises
         Promise.all(orderPromises).then(function(results) {
 
-            // Inject integration object & values
-            if (result.integration == null) {
-                if (result.status == 'Entered') {
-                    result.integration.status = 'Processing'
-                }
-                else if (result.status == 'Posted') {
-                    result.integration.status = 'Ready to Pack'
-                }
-                else if (result.status == 'Shipped') {
-                    result.integration.status = 'Shipped'
-                }
-                else if (result.status == 'Void') {
-                    result.integration.status = 'Void'
-                }
-            }
-            else {
-                if (result.status == 'Entered') {
-                    result.integration.status = 'Processing'
-                }
-                else if (result.status == 'Posted') {
-                    result.integration.status = 'Ready to Pack'
-                }
-                else if (result.status == 'Void') {
-                    result.integration.status = 'Void'
-                }
-            }
-
             // Iterate through results
             for (result of results) {
+
+                // Inject integration object & values
+                // if (!result.integration) {
+
+                //     result.integration = {}
+
+                //     if (result.orderInfo.status == 'Entered') {
+                //         result.integration.status = 'Waiting Payment'
+                //     }
+                //     else if (result.orderInfo.status == 'Posted') {
+                //         result.integration.status = 'Ready to Pack'
+                //     }
+                //     else if (result.orderInfo.status == 'Shipped') {
+                //         result.integration.status = 'Shipped'
+                //     }
+                //     else if (result.orderInfo.status == 'Void') {
+                //         result.integration.status = 'Void'
+                //     }
+                // }
+                // else {
+                //     if (result.orderInfo.status == 'Entered') {
+                //         result.integration.status = 'Waiting Payment'
+                //     }
+                //     else if (result.orderInfo.status == 'Posted') {
+                //         result.integration.status = 'Ready to Pack'
+                //     }
+                //     else if (result.orderInfo.status == 'Void') {
+                //         result.integration.status = 'Void'
+                //     }
+                // }
+
                 // Save order object in database
                 Order.findOneAndUpdate({orderId: result.orderId}, result, {upsert: true}, function(err, order) {
                     // Log Error
